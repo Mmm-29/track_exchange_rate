@@ -66,6 +66,9 @@ EXCHANGE_RATE/
 
 * Creates report directory if not exists
 * Fetches rate data
+* Calls:
+
+ `fetch_today_yesterday_rates()`
 * Computes:
 
   * Today rate
