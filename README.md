@@ -10,7 +10,6 @@ The system also includes:
 * Custom exception handling
 * Automated scheduling (Windows Task Scheduler)
 
-Designed to mimic **production-grade data pipelines** with modular architecture and observability.
 
 ---
 
