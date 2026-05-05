@@ -1,131 +1,195 @@
 #  Exchange Rate Reporting System
 
-A modular Python project that fetches real-time exchange rates from an external API, compares today’s and yesterday’s rates, calculates percentage changes, and generates a CSV report. It also includes structured logging and custom exception handling to support debugging, observability, and production-style execution.
-
 ##  Overview
 
-This project is designed for automated exchange-rate monitoring and reporting. It retrieves currency conversion data, compares daily movement, flags significant changes, and stores the results in a CSV report for further analysis.
+A modular Python project that fetches real-time exchange rates from an external API, compares today’s and yesterday’s rates, calculates percentage changes, and generates a CSV report.
 
-The codebase follows a modular structure with separate components for API access, report generation, logging, and exception handling.
+The system also includes:
+
+* Structured logging
+* Custom exception handling
+* Automated scheduling (Windows Task Scheduler)
+
+Designed to mimic **production-grade data pipelines** with modular architecture and observability.
+
+---
 
 ##  Features
 
-- Fetch exchange rates from an external API
-- Compare today’s and yesterday’s rates
-- Calculate percentage change for each currency
-- Identify significant changes greater than 0.5%
-- Generate CSV reports automatically
-- Maintain structured log files with timestamps
-- Use custom exception handling for easier debugging
+*  Fetch exchange rates from external API
+*  Compare today vs yesterday
+*  Percentage change calculation
+*  Detect significant changes (>0.5%)
+*  Automated CSV report generation
+*  Structured logging system
+*  Custom exception handling
+*  Automated daily execution (Scheduler)
+
+---
 
 ##  Project Structure
 
-```bash
+```
 EXCHANGE_RATE/
 │
-├── logs/                      # Stores log files
-├── report/                    # Stores generated CSV reports
+├── logs/                      # Log files
+├── report/                    # CSV reports
 ├── src/
 │   ├── exception/
-│   │   └── exception.py       # Custom exception handling
+│   │   └── exception.py
 │   ├── logging/
-│   │   └── logger.py          # Logging configuration
+│   │   └── logger.py
 │   ├── exchange_rate_code/
-│       ├── fetch_rates.py     # API calls for exchange rates
-│       ├── generate_report.py # Report generation logic
+│       ├── fetch_rates.py
+│       ├── generate_report.py
 │
 ├── main.py                    # Entry point
+├── scheduler_task.py          # Task scheduler (Windows)
 ├── requirements.txt
 ```
 
+---
+
 ##  Execution Flow
 
-### 1. Entry Point (`main.py`)
+### 1️ Entry Point (`main.py`)
 
-The application starts from `main.py`, where the following inputs are defined:
+* Accepts:
 
-- Base currency (default: `USD`)
-- Date (default: current date)
-- Currency list
+  * Base currency (default: USD)
+  * Date
+  * Currency list
+* Calls report generation logic
 
-It then calls the report creation logic.
+---
 
-### 2. Report Generation (`generate_report.py`)
+### 2️ Report Generation (`generate_report.py`)
 
-This module:
+* Creates report directory if not exists
+* Fetches rate data
+* Computes:
 
-- Creates the report directory if it does not exist
-- Calls the rate-fetching function
-- Computes:
-  - Today’s rate
-  - Yesterday’s rate
-  - Percentage change
-  - Significant change flag
-- Saves the final output as a CSV file
+  * Today rate
+  * Yesterday rate
+  * % change
+  * Significant flag
+* Saves CSV report
 
-### 3. Fetching Data (`fetch_rates.py`)
+---
 
-This module connects to the Frankfurter exchange rate API:
+### 3️ Fetching Data (`fetch_rates.py`)
 
-[Frankfurter API](https://api.frankfurter.dev/v2/rates)
+* Uses API:
 
-It fetches:
+  ```
+  https://api.frankfurter.dev/v2/rates
+  ```
+* Retrieves:
 
-- Today’s exchange rates
-- Yesterday’s exchange rates
-- API activity logs
+  * Today’s rates
+  * Yesterday’s rates
 
-### 4. Logging (`logger.py`)
+---
 
-The logging module:
+### 4️ Logging (`logger.py`)
 
-- Creates timestamp-based log files
-- Stores logs inside the `/logs/` directory
-- Uses the format:
+* Stores logs in `/logs/`
+* Format:
 
-```text
-time : level : message
+  ```
+  time : level : message
+  ```
+
+---
+
+### 5️ Exception Handling (`exception.py`)
+
+Custom `securityException` captures:
+
+* File name
+* Line number
+* Error message
+
+---
+
+### 6️ Scheduler (`scheduler_task.py`)
+
+This script automates daily execution using **Windows Task Scheduler**.
+
+####  Code
+
+```python
+import subprocess
+
+TASK_NAME = "ExchangeRateFetchingTaskDaily"
+PYTHON_PATH = r"D:\exchange_rate\virtual_env\Scripts\python.exe"
+PROJECT_DIR = r"D:\exchange_rate"
+SCRIPT_NAME = "main.py"
+
+SCHEDULE_TIME = "11:06"
+
+command = (
+    f'schtasks /create /sc DAILY /tn "{TASK_NAME}" '
+    f'/tr "cmd /c cd /d {PROJECT_DIR} && {PYTHON_PATH} {SCRIPT_NAME}" '
+    f'/st {SCHEDULE_TIME} /f'
+)
+
+subprocess.run(command, shell=True)
+
+print("Task Scheduled Successfully!")
 ```
 
-### 5. Exception Handling (`exception.py`)
+---
 
-A custom exception class is used to capture:
+###  How Scheduler Works
 
-- File name
-- Line number
-- Error message
+* Uses Windows command: `schtasks`
+* Runs script daily at specified time
+* Automatically triggers:
 
-This makes debugging easier, especially in production-style workflows.
+  ```
+  python main.py
+  ```
 
-## Output
+---
 
-The system generates a CSV report containing exchange-rate comparisons.
+## 📊 Output
 
-### Example CSV Output
+Example CSV:
 
-```csv
+```
 currency,today_rate,yesterday_rate,% change,significant
 INR,83.12,82.95,0.2048,No
 EUR,0.92,0.91,1.0989,Yes
 ```
 
-## How to Run
+---
 
-### Step 1: Install dependencies
+##  How to Run
+
+### 1️ Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 2: Run the application
+### 2️ Run manually
 
 ```bash
 python main.py
 ```
 
-## Configuration
+### 3️ Setup scheduler (Windows)
 
-Inside `main.py`, you can configure:
+```bash
+python scheduler_task.py
+```
+
+---
+
+##  Configuration
+
+Inside `main.py`:
 
 ```python
 BASE_CURRENCY = "USD"
@@ -133,40 +197,36 @@ USER_DATE = "2025-05-05"
 CURRENCY = ["INR", "AED", "USD", "EUR", "GBP"]
 ```
 
-You can modify:
+---
 
-- Base currency
-- Date
-- Currency list
+##  Logs
 
-## Logs
+* Stored in `/logs/`
+* New log file per run
+* Tracks:
 
-Log files are:
+  * API calls
+  * Processing steps
+  * Errors
 
-- Stored in `/logs/`
-- Created separately for each run
-- Useful for tracking:
-  - API calls
-  - Processing steps
-  - Errors
+---
 
-## Error Handling
+##  Error Handling
 
-All exceptions are wrapped using `securityException`, which provides:
+All exceptions are wrapped using `securityException`:
 
-- Exact file location
-- Line number
-- Error message
+* File location
+* Line number
+* Error message
 
-This helps diagnose failures quickly and improves maintainability.
+---
 
-## Future Improvements
+##  Future Improvements
 
-- Add database storage
-- Add an API layer using FastAPI
-- Add scheduling with Airflow or Cron
-- Add a visualization dashboard using Streamlit
+*  Database integration
+*  FastAPI API layer
+*  Airflow / Cron scheduling (cross-platform)
+*  Streamlit dashboard
 
-## Author
+---
 
-Developed as a modular and production-ready pipeline for real-world exchange rate monitoring and reporting.
